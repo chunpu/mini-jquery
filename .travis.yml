@@ -1,5 +1,5 @@
 language: node_js
-branched:
+branches:
   only:
     - gh-pages
 env:
