@@ -1,0 +1,19 @@
+{
+  "name": "mini-jquery",
+  "version": "1.0.0",
+  "description": "A mini jQuery",
+  "main": "mini-jquery.js",
+  "scripts": {
+    "test": "duo-test phantomjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chunpu/mini-jquery.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chunpu/mini-jquery/issues"
+  },
+  "homepage": "https://github.com/chunpu/mini-jquery"
+}
