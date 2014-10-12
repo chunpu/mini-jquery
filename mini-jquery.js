@@ -162,6 +162,16 @@ $.extend({
             return fn.apply(context || this, args.concat(slice.call(arguments)))
         }
     },
+    indexOf: function(arr, val, from) {
+        var i = (from  || 0) - 1
+        var len = arr.length
+        while (++i < len) {
+            if (arr[i] === val) {
+                return i
+            }
+        }
+        return -1
+    },
     now: function() {
         return +new Date()
     },
@@ -224,7 +234,7 @@ $.extend({
         var tp = typeof val
         if (tp == 'object' || tp == 'function') {
             var className = $.getClassName(val)
-            if (-1 == classes.indexOf(className)) {
+            if (-1 == $.indexOf(classes, className)) {
                 return 'object'
             }
             return className

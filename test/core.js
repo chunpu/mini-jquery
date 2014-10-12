@@ -73,6 +73,21 @@ describe('core', function() {
             )
         })
 
+        it('$.indexOf', function() {
+            assert.equal(
+                $.indexOf([1, 2, 3, 4], 5), -1
+            )
+            assert.equal(
+                $.indexOf([5, 6, 7, 8], 7), 2
+            )
+            assert.equal(
+                $.indexOf([1, 2, 3], '2'), -1
+            )
+            assert.equal(
+                $.indexOf([1, 2, 3, 2, 1], 2, 2), 3
+            )
+        })
+
         it('$.trim', function() {
             assert.equal($.trim('  qq   '), 'qq')
             var nbsp = String.fromCharCode(160)
