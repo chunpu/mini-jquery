@@ -131,17 +131,17 @@ $.extend({
     },
     filter: function(arr, fn) {
         var ret = []
-        $.each(function(i, arr) {
-            if (fn.call(this, i, arr)) {
-                ret.push(this)
+        $.each(arr, function(k, v) {
+            if (fn.call(this, k, v, arr)) {
+                ret.push(v)
             }
         })
         return ret
     },
     map: function(arr, fn) {
         var ret = []
-        $.each(function(i, arr) {
-            ret[i] = fn.call(this, i, arr)
+        $.each(arr, function(k, v) {
+            ret[k] = fn.call(this, k, v, arr)
         })
         return ret
     },
@@ -156,8 +156,9 @@ $.extend({
             fn = fn[context]
             context = tmp
         }
+        var args = slice.call(arguments, 2)
         return function() {
-            return fn.apply(context || this, slice.call(arguments, 2))
+            return fn.apply(context || this, args.concat(slice.call(arguments)))
         }
     },
     now: function() {
