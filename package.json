@@ -4,7 +4,9 @@
   "description": "A mini jQuery",
   "main": "mini-jquery.js",
   "scripts": {
-    "test": "duo-test phantomjs"
+    "phantomjs": "duo-test phantomjs",
+    "build": "cat test/head > _temp.js && cat test/*.js >> _temp.js && browserify _temp.js > build.js",
+    "test": "npm run build && npm run phantomjs"
   },
   "repository": {
     "type": "git",
@@ -15,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/chunpu/mini-jquery/issues"
   },
-  "homepage": "https://github.com/chunpu/mini-jquery"
+  "homepage": "https://github.com/chunpu/mini-jquery",
+  "devDependencies": {
+    "browserify": "^6.0.3"
+  }
 }

@@ -9,5 +9,6 @@ env:
 install:
   - npm install -g duo-test phantomjs
 script:
+  - npm run build
   - duo-test saucelabs -b ie:10..11
 

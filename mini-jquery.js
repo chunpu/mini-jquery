@@ -1,5 +1,7 @@
-!function(fn) {
-    window.$ = fn()
+!function(f) {
+    if ('object' == typeof exports) module.exports = f()
+    else if ('function' == typeof define && define.amd) define(f)
+    else if ('undefined' !== typeof window) window.$ = f()
 }(function() {
 
 var $ = function(selector, context) {
