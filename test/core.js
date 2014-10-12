@@ -31,13 +31,23 @@ describe('core', function() {
             })
             assert(1 === $.a)
             assert(2 === $.b)
+
             $.fn.extend({
                 c: 3,
                 d: 4
             })
             assert(3 === $.fn.c)
             assert(4 === $.fn.d)
+
+            var raw = {a: 1, b: 2}
+            var ret = $.extend(raw, {c: 3}, {d: 4})
+            assert(ret === raw)
+            assert.deepEqual(raw, {
+                a: 1,
+                b: 2,
+                c: 3,
+                d: 4
+            })
         })
     })
-
 })
