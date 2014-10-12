@@ -11,5 +11,4 @@ install:
   - npm install
 script:
   - npm run build
-  - duo-test saucelabs -b ie:10..11
-
+  - duo-test saucelabs -b ie:6..11
