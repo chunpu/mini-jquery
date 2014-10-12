@@ -110,5 +110,28 @@ describe('core', function() {
             assert(now2 - now1 < 100)
             assert(now1 > 10000000)
         })
+
+        it('$.merge', function() {
+            assert.deepEqual($.merge([1, 2], [3, 4]), [1, 2, 3, 4])
+            assert.deepEqual($.merge([1, 2], {0: 3, 1: 4, length: 2}), [1, 2, 3, 4])
+            assert.deepEqual($.merge({0: 1, 1: 2, length: 2}, [3, 4]), {
+                0: 1,
+                1: 2,
+                2: 3,
+                3: 4,
+                length: 4
+            })
+        })
+
+        it('$.error', function() {
+            var i = 0
+            try {
+                $.error('error')
+            } catch (e) {
+                i++
+                assert(e.message, 'error')
+            }
+            assert(i == 1)
+        })
     })
 })

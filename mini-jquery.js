@@ -17,6 +17,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     , expando = function() {
         return Math.random() + 1
     }
+    , classes = 'boolean number string function array date regexp object error'.split(' ')
 
 // core
 $.fn = $.prototype = {
@@ -215,9 +216,20 @@ $.extend({
             return ''
         })) ? (Function('return ' + str))() : $.error("Invalid JSON: " + data)
     },
-    type: function(val) {
+    getClassName: function(val) {
         var ret = {}.toString.call(val).split(' ')[1]
         return ret.substr(0, ret.length - 1).toLowerCase()
+    },
+    type: function(val) {
+        var tp = typeof val
+        if (tp == 'object' || tp == 'function') {
+            var className = $.getClassName(val)
+            if (-1 == classes.indexOf(className)) {
+                return 'object'
+            }
+            return className
+        }
+        return tp
     }
 })
 
