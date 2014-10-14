@@ -1,8 +1,11 @@
 !function(f) {
-    if ('object' == typeof exports) module.exports = f()
-    else if ('function' == typeof define && define.amd) define(f)
-    else if ('undefined' !== typeof window) window.$ = f()
-}(function() {
+    function $() {
+        return f(window, document, navigator, undefined, setTimeout)
+    }
+    if ('object' == typeof exports) module.exports = $()
+    else if ('function' == typeof define && define.amd) define($)
+    else window.$ = $()
+}(function(window, document, navigator, undefined, setTimeout) {
 
 var $ = function(selector, context) {
     return new $.fn.init(selector, context)
@@ -13,7 +16,6 @@ var $ = function(selector, context) {
 var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     , rvalidtokens = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g
     , slice = [].slice
-    , doc = document
     , expando = function() {
         return Math.random() + 1
     }
@@ -80,7 +82,7 @@ $.fn.init = function (selector, context) {
         $.toArray(selector, this)
     } else if ('string' == typeof selector) {
         if (-1 != selector.indexOf('<')) {
-            var div = doc.createElement('div')
+            var div = document.createElement('div')
             div.innerHTML = selector
             return $(div.childNodes)
         }
@@ -94,7 +96,7 @@ $.fn.init = function (selector, context) {
 }
 // the order...
 $.fn.init.prototype = $.fn
-root = $(doc)
+root = $(document)
 
 $.extend = $.fn.extend = function() {
     var len = arguments.length
@@ -197,7 +199,7 @@ $.extend({
         return ret
     },
     findOne: function(str, node) {
-        node = node || doc
+        node = node || document
         var ret = []
         if ($.customFind) {
             ret = slice.call($.customFind(str, node))
