@@ -5,7 +5,7 @@
   "main": "mini-jquery.js",
   "scripts": {
     "phantomjs": "duo-test phantomjs",
-    "build": "cat test/head > _temp.js && cat test/*.js >> _temp.js && browserify _temp.js > build.js",
+    "build": "cat test/head > _temp.js && cat test/*.js >> _temp.js && browserify _temp.js > build.js && cat show.html > test/index.html",
     "test": "npm run build && npm run phantomjs"
   },
   "repository": {

@@ -1,3 +1,4 @@
 build.js
 _*
 node_modules
+test/index.html
