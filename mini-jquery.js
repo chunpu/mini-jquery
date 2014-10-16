@@ -516,6 +516,8 @@ var ajaxSetting = {
 
 $.ajaxSetting = ajaxSetting
 
+$.request = request
+
 function request(url, opt, cb) {
     if (url && 'object' == typeof url) {
         return $.ajax(url.url, url, cb)
