@@ -20,6 +20,19 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         return Math.random() + 1
     }
     , classes = 'boolean number string function array date regexp object error'.split(' ')
+    , isLetter = function(str) {
+        if (str && 'string' == typeof str) {
+            str = str.toUpperCase()
+            for (var i = 0; i < str.length; i++) {
+                var code = str.charCodeAt(i)
+                if (code < 65 || code > 90) {
+                    return false
+                }
+            }
+            return true
+        }
+        return false
+    }
 
 // core
 $.fn = $.prototype = {
@@ -70,30 +83,51 @@ $.fn = $.prototype = {
 var root
 
 $.fn.init = function (selector, context) {
-    if (!selector) return this
+    if (!selector) return this // $(null)
     var len = selector.length
     if ('function' == typeof selector) {
         // TODO ready
-        return selector($)
+        // $(callback)
+        return selector()
     } else if (selector.nodeType) {
+        // $(dom)
         this.context = this[0] = selector
         this.length = 1
-    } else if (len && selector[0].nodeType) {
-        $.toArray(selector, this)
     } else if ('string' == typeof selector) {
+        /*
+        if ('#' == selector[0] && !context) {
+            // $('#id')
+            var id = selector.substr(1)
+            if (isLetter(id))
+            var dom = document.getElementById(id)
+            if (dom) {
+                this.context = this[0] = dom
+                this.length = 1
+            }
+        } else */
         if (-1 != selector.indexOf('<')) {
+            // $('<div>') parse html
             var div = document.createElement('div')
             div.innerHTML = selector
             return $(div.childNodes)
+        } else {
+            context = context || root
+            if (context.nodeType) context = $(context) // convert dom to $(dom)
+            return context.find(selector)
         }
-        // TODO parse html
-        else if (!context || context.jquery) {
-            return (context || root).find(selector)
+    } else if (len) {
+        // $([dom1, dom2])
+        // should after string, because string has length too
+        for (var i = 0; i < len; i++) {
+            if (selector[i] && selector[i].nodeType) {
+                this[this.length] = selector[i]
+                this.length++
+            }
         }
-        
     }
     return this
 }
+
 // the order...
 $.fn.init.prototype = $.fn
 root = $(document)
@@ -122,6 +156,7 @@ $.extend({
     toArray: function(arr, ret) {
         return [].push.apply(ret || [], arr)
     },
+    isLetter: isLetter,
     noop: function() {},
     each: function(arr, fn) {
         var len = arr ? arr.length : 0
@@ -198,14 +233,32 @@ $.extend({
         }
         return ret
     },
-    findOne: function(str, node) {
-        node = node || document
+    findOne: function(str, dom) {
+        dom = dom || document
+        var nodes, ret = []
+        if ('#' == str.charAt(0)) {
+            var id = str.substr(1)
+            if (id && dom.getElementById) {
+                // $('#id')
+                var el = dom.getElementById(id)
+                if (el) {
+                    return [el]
+                }
+            }
+        }
+        if (isLetter(str)) {
+            // $('tag')
+            nodes = dom.getElementsByTagName(str)
+        } else if ($.customFind) {
+            nodes = $.customFind(str, dom)
+        } else if (dom.querySelectorAll) {
+            nodes = dom.querySelectorAll(str)
+        }
+        // cannot use slice.call because dom object throw error in ie8-
+        var len = nodes ? nodes.length : 0
         var ret = []
-        if ($.customFind) {
-            ret = slice.call($.customFind(str, node))
-        } else if (node.querySelectorAll) {
-            var nodes = node.querySelectorAll(str)
-            ret = slice.call(nodes)
+        for (var i = 0; i < len; i++) {
+            ret[i] = nodes[i]
         }
         return ret
     },
@@ -246,7 +299,6 @@ $.extend({
 })
 
 // access
-
 $.access = function(elems, fn, key, val) {
     var i = 0
     if (key && 'object' === typeof key) {
