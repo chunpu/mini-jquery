@@ -1,7 +1,6 @@
 describe('$.findOne', function() {
     it('#id', function() {
         var $ul = $.findOne('#ul')
-        console.log($ul)
         assert.equal(1, $ul.length, 'find id')
         assert.equal($ul[0].id, 'ul')
 

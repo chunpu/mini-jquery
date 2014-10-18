@@ -80,58 +80,6 @@ $.fn = $.prototype = {
     }
 }
 
-var root
-
-$.fn.init = function (selector, context) {
-    if (!selector) return this // $(null)
-    var len = selector.length
-    if ('function' == typeof selector) {
-        // TODO ready
-        // $(callback)
-        return selector()
-    } else if (selector.nodeType) {
-        // $(dom)
-        this.context = this[0] = selector
-        this.length = 1
-    } else if ('string' == typeof selector) {
-        /*
-        if ('#' == selector[0] && !context) {
-            // $('#id')
-            var id = selector.substr(1)
-            if (isLetter(id))
-            var dom = document.getElementById(id)
-            if (dom) {
-                this.context = this[0] = dom
-                this.length = 1
-            }
-        } else */
-        if (-1 != selector.indexOf('<')) {
-            // $('<div>') parse html
-            var div = document.createElement('div')
-            div.innerHTML = selector
-            return $(div.childNodes)
-        } else {
-            context = context || root
-            if (context.nodeType) context = $(context) // convert dom to $(dom)
-            return context.find(selector)
-        }
-    } else if (len) {
-        // $([dom1, dom2])
-        // should after string, because string has length too
-        for (var i = 0; i < len; i++) {
-            if (selector[i] && selector[i].nodeType) {
-                this[this.length] = selector[i]
-                this.length++
-            }
-        }
-    }
-    return this
-}
-
-// the order...
-$.fn.init.prototype = $.fn
-root = $(document)
-
 $.extend = $.fn.extend = function() {
     var len = arguments.length
     var i = 1, obj
@@ -295,8 +243,52 @@ $.extend({
             return className
         }
         return tp
+    },
+    isFunction: function(func) {
+        return 'function' == $.type(func)
     }
 })
+
+var root
+
+$.fn.init = function (selector, context) {
+    if (!selector) return this // $(null)
+    var len = selector.length
+    if ($.isFunction(selector)) {
+        // TODO ready
+        // $(callback)
+        return selector()
+    } else if (selector.nodeType) {
+        // $(dom)
+        this.context = this[0] = selector
+        this.length = 1
+    } else if ('string' == typeof selector) {
+        if (-1 != selector.indexOf('<')) {
+            // $('<div>') parse html
+            var div = document.createElement('div')
+            div.innerHTML = selector
+            return $(div.childNodes)
+        } else {
+            context = context || root
+            if (context.nodeType) context = $(context) // convert dom to $(dom)
+            return context.find(selector)
+        }
+    } else if (len) {
+        // $([dom1, dom2])
+        // should after string, because string, function has length too
+        for (var i = 0; i < len; i++) {
+            if (selector[i] && selector[i].nodeType) {
+                this[this.length] = selector[i]
+                this.length++
+            }
+        }
+    }
+    return this
+}
+
+// the order...
+$.fn.init.prototype = $.fn
+root = $(document)
 
 // access
 $.access = function(elems, fn, key, val) {

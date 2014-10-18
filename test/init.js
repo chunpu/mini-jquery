@@ -17,13 +17,22 @@ describe('init', function() {
         var ul = $('#ul')[0]
         assert(ul.nodeType, 'get ul first')
         var $li = $('li', ul)
-        assert.equal($li.length, 2, 'get li in ul')
+        assert.equal($li.length, 2)
     })
 
     it('$([dom1, dom2])', function() {
-        var $li = document.getElementsByTagName('li')
-        assert(!$li.jquery, 'not jquery nodes')
-        $li = $($li)
-        assert($li.jquery, 'jquery nodes')
+        var $ul = document.getElementsByTagName('ul')
+        var len = $ul.length
+        assert(!$ul.jquery, 'not jquery nodes')
+        var $ul2 = $($ul)
+        assert($ul2.jquery, 'jquery nodes')
+        assert.equal($ul2.length, $ul.length)
+    })
+
+    it('$($nodes)', function() {
+        var $nodes1 = $('ul')
+        var $nodes2 = $($nodes1)
+        assert.equal($nodes2.length, $nodes1.length, '$($nodes) same length')
+        assert($nodes2 != $nodes1, 'not the same object')
     })
 })
