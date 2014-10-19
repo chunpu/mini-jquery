@@ -130,4 +130,23 @@ describe('$.Callbacks', function() {
         assert.equal(i, 1)
     })
 
+    it('remove self', function() {
+        var cb = $.Callbacks()
+        var i = 0
+        var j = 0
+        var removeSelf = function() {
+            j++
+            this.remove(removeSelf)
+        }
+        var fn = function() {
+            i++
+        }
+        cb.add(fn).add(removeSelf).add(fn).fire()
+        assert.equal(i, 2)
+        assert.equal(j, 1)
+        cb.fire()
+        assert.equal(i, 4)
+        assert.equal(j, 1)
+    })
+
 })

@@ -86,6 +86,12 @@ describe('core', function() {
             assert.equal(
                 $.indexOf([1, 2, 3, 2, 1], 2, 2), 3
             )
+            assert.equal(
+                $.indexOf('asdfg', 'dfg'), 2
+            )
+            assert.equal(
+                $.indexOf('qqaaqq', 'qq', 3), 4
+            )
         })
 
         it('$.trim', function() {

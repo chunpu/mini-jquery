@@ -148,7 +148,13 @@ $.extend({
         }
     },
     indexOf: function(arr, val, from) {
-        var i = (from  || 0) - 1
+        from = from || 0
+        if ('string' == typeof arr) {
+            var index = arr.substr(from).indexOf(val)
+            if (-1 == index) return -1
+            return from + index
+        }
+        var i = from - 1
         var len = arr.length
         while (++i < len) {
             if (arr[i] === val) {
@@ -294,7 +300,7 @@ $.fn.init.prototype = $.fn
 root = $(document)
 
 // access
-$.access = function(elems, fn, key, val) {
+$.access = function(elems, fn, key, val, isChain) {
     var i = 0
     if (key && 'object' === typeof key) {
         // set multi k, v
@@ -303,7 +309,10 @@ $.access = function(elems, fn, key, val) {
         }
     } else if (undefined === val) {
         // get value
-        return fn(elems[0], key)
+        var ret = fn(elems[0], key)
+        if (!isChain) {
+            return ret
+        }
     } else {
         // set one k, v
         for (i = 0; i < elems.length; i++) {
@@ -332,6 +341,9 @@ $.fn.extend({
     },
     data: function(key, val) {
         return $.access(this, $.data, key, val)
+    },
+    removeData: function(key) {
+        return $.access(this, $.removeData, key, undefined, true)
     }
 })
 
@@ -366,15 +378,48 @@ $.fn.extend({
     }
 })
 
-var data_user = {
-    expando: expando(),
-    cache: []
+function Data() {
+    this.expando = expando()
+    this.cache = []
 }
 
-var data_priv = {
-    expando: expando(),
-    cache: []
+Data.prototype = {
+    get: function(owner, key) {
+        var ret = this.cache[owner[this.expando]] || {}
+        if (key) {
+            return ret[key]
+        }
+        return ret
+    },
+    set: function(owner, key, val) {
+        var expando = this.expando
+        var cache = this.cache
+        if (owner[expando] >= 0) {
+            cache[owner[expando]][key] = val
+        } else {
+            var len = cache.length
+            owner[expando] = len
+            cache[len] = {}
+            cache[len][key] = val
+        }
+    },
+    remove: function(owner, key) {
+        var expando = this.expando
+        var cache = this.cache
+        var len = owner[expando]
+        if (len >= 0) {
+            if (undefined === key) {
+                cache[len] = {}
+            } else {
+                delete cache[len][key]
+            }
+        }
+    }
 }
+
+var data_user = new Data
+
+var data_priv = new Data
 
 $.extend({
     attr: function(elem, key, val) {
@@ -414,21 +459,21 @@ $.extend({
     data: function(elem, key, val) {
         if (undefined !== val) {
             // set val
-            if (elem[data_user.expando] >= 0) {
-                data_user.cache[elem[data_user.expando]][key] = val
-            } else {
-                var len = data_user.cache.length
-                elem[data_user.expando] = len
-                data_user.cache[len] = {}
-                data_user.cache[len][key] = val
-            }
+            data_user.set(elem, key, val)
         } else {
-            var ret = data_user.cache[elem[data_user.expando]] || {}
-            if (key) {
-                return ret[key]
+            if (key && 'object' == typeof key) {
+                // set multi
+                for (var k in key) {
+                    $.data(elem, k, key[k])
+                }
+            } else {
+                // get
+                return data_user.get(elem, key)
             }
-            return ret
         }
+    },
+    removeData: function(elem, key) {
+        data_user.remove(elem, key)
     }
 })
 
@@ -437,7 +482,9 @@ $.Callbacks = function(opt) {
     if (!(this instanceof $.Callbacks)) {
         return new $.Callbacks(opt)
     }
+    opt = opt || {}
     this.cache = []
+    this.unique = opt.unique
 }
 
 var callback = $.Callbacks.prototype
@@ -445,6 +492,11 @@ var callback = $.Callbacks.prototype
 callback.add = function(fn, opt) {
     opt = opt || {}
     opt.handler = fn
+    if (this.unique) {
+        for (var i = 0, x; x = this.cache[i++];) {
+            if (fn == x.handler) return this
+        }
+    }
     this.cache.push(opt)
     return this
 }
@@ -453,14 +505,12 @@ callback.remove = function(fn) {
     if (fn) {
         for (var i = 0, x; x = this.cache[i]; i++) {
             if ('string' == typeof fn && '.' === fn[0]) {
-                if (fn.substr(1) == x.namepsace) {
+                if (fn.substr(1) == x.namespace) {
                     this.cache.splice(i, 1)
-                    break
                 }
             }
             if (x.handler == fn) {
                 this.cache.splice(i, 1)
-                break
             }
         }
     } else {
@@ -474,7 +524,7 @@ callback.fire = function() {
 }
 
 callback.fireWith = function(ctx, args) {
-    $.each(this.cache, function() {
+    $.each(this.cache.slice(), function() {
         return this.handler.apply(ctx, args)
     })
 }
@@ -527,7 +577,7 @@ $.extend({
             }
         }
     },
-    trigger: function(elem, ev, handler) {
+    trigger: function(elem, ev) {
     }
 })
 
