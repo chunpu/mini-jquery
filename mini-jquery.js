@@ -12,7 +12,6 @@ var $ = function(selector, context) {
 }
 
 // var
-
 var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     , rvalidtokens = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g
     , slice = [].slice
@@ -33,6 +32,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         }
         return false
     }
+    , eventNS = '_events' // $.data(eventNS) event namespace
 
 // core
 $.fn = $.prototype = {
@@ -243,6 +243,9 @@ $.extend({
             return className
         }
         return tp
+    },
+    isArray: function(arr) {
+        return 'array' == $.type(arr)
     },
     isFunction: function(func) {
         return 'function' == $.type(func)
@@ -476,27 +479,25 @@ callback.fireWith = function(ctx, args) {
     })
 }
 
-
 // events
-function _handler(e) {
-    var events = $.data(this, '_events') || {}
+function miniHandler(e) {
+    var events = $.data(this, eventNS) || {}
     if (events[e.type]) {
         events[e.type].fireWith(this, [e])
     }
-    // TODO prevent default
 }
 
 $.extend({
     on: function(elem, ev, handler) {
-        var events = $.data(elem, '_events')
+        var events = $.data(elem, eventNS)
         var arr = ev.split('.')
         ev = arr[0]
         if (!events) {
             events = {}
-            $.data(elem, '_events', events)
+            $.data(elem, eventNS, events)
         }
         events[ev] = events[ev] || new $.Callbacks()
-        elem.addEventListener(ev, _handler, false)
+        elem.addEventListener(ev, miniHandler, false)
         events[ev].add(function(ev) {
             var ret = handler.call(this, ev)
             if (false === ret) {
@@ -511,7 +512,7 @@ $.extend({
     // off click, .namespace, click handler, __
     off: function(elem, ev, handler) {
         // $.off(elem, 'click', [handler])
-        var events = $.data(elem, '_events')
+        var events = $.data(elem, eventNS)
         if (!events) return
         if ('.' == ev[0]) {
             // namespace
@@ -521,10 +522,12 @@ $.extend({
         } else if (events[ev]) {
             events[ev].remove(handler)
             if (!handler) {
-                // the event is empty
-                elem.removeEventListener(ev, _handler, false)
+                // the event is empty, clear handler
+                elem.removeEventListener(ev, miniHandler, false)
             }
         }
+    },
+    trigger: function(elem, ev, handler) {
     }
 })
 

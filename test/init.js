@@ -35,4 +35,21 @@ describe('init', function() {
         assert.equal($nodes2.length, $nodes1.length, '$($nodes) same length')
         assert($nodes2 != $nodes1, 'not the same object')
     })
+
+    it('$(<div>div</div>)', function() {
+        var $div = $('<div>div</div>')
+        assert.equal($div.length, 1)
+        var div = $div[0]
+        assert.equal(div.innerHTML, 'div')
+        assert.equal(div.tagName.toUpperCase(), 'DIV')
+    })
+    
+    it('$(<div>)', function() {
+        var $div = $('<div>')
+        assert.equal($div.length, 1)
+        var div = $div[0]
+        assert.equal(div.tagName.toUpperCase(), 'DIV')
+        assert.equal(div.innerHTML, '')
+    })
+
 })
