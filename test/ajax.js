@@ -4,7 +4,9 @@ describe('ajax', function() {
             assert(!err, 'err is falsy')
             assert(body.length > 1000, 'build.js is long > 1000')
             assert.equal(typeof res, 'object', 'res is a object')
-            done()
         })
+        done()
     })
 })
+
+

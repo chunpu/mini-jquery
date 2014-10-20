@@ -33,6 +33,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         return false
     }
     , eventNS = 'events' // $.data(eventNS) event namespace
+    , cors = 'withCredentials'
 
 // core
 $.fn = $.prototype = {
@@ -637,7 +638,7 @@ var ajaxSetting = {
             if (window.XMLHttpRequest) {
                 return new XMLHttpRequest()
             }
-            return new ActiveXObject("Microsoft.XMLHTTP")
+            return new ActiveXObject('Microsoft.XMLHTTP')
         } catch (e) {}
     },
     jsonp: 'callback'
@@ -646,6 +647,10 @@ var ajaxSetting = {
 $.ajaxSetting = ajaxSetting
 
 $.request = request
+
+var support = {}
+
+$.support = support
 
 function request(url, opt, cb) {
     if (url && 'object' == typeof url) {
@@ -661,27 +666,33 @@ function request(url, opt, cb) {
     // TODO seperate by dataType, return {send, abort} 
     //if dataType == jsonp, script
     var dataType = opt.dataType
-
     var xhr = ajaxSetting.xhr()
+    if (!xhr) return
     var type = opt.type || 'GET'
-    xhr.open(type, url, !cb.async, opt.username, opt.password)
-    var headers = opt.headers
-
-    if (headers) {
-        for (var key in headers) {
-            xhr.setRequestHeader(key, headers[key])
-        }
-    }
-
-    xhr.withCredentials = true
-    xhr.send(opt.data)
-
     var handler = function() {
         if (handler &&  4 === xhr.readyState) {
             handler = undefined
             cb(null, xhr, xhr.responseText)
         }
     }
+
+    xhr.open(type, url, !cb.async)
+
+    if (cors in xhr) {
+        support.cors = true
+        xhr[cors] = true // should after open
+    }
+
+    var headers = opt.headers
+    if (headers) {
+        for (var key in headers) {
+            xhr.setRequestHeader(key, headers[key])
+        }
+    }
+
+//    xhr.withCredentials = true
+    xhr.send(opt.data || null)
+
     if (false === opt.async) {
         handler()
     } else if (4 === xhr.readyState) {
