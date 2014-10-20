@@ -9,11 +9,6 @@
   <body>
     <div id="mocha"></div>
     <script>mocha.setup({ ui: 'bdd', timeout: 3000 })</script>
-    <script src="/build.js"></script>
-    <script>
-    duotest(mocha.run())
-    </script>
-
     <div id='test'>
         <a></a>
         <ul id='ul' data-number='2'>
@@ -33,5 +28,11 @@
             <div id='event2'></div>
         </div>
     </div>
+
   </body>
 </html>
+    <script src="/build.js"></script>
+    <script>
+    duotest(mocha.run())
+    </script>
+

@@ -32,7 +32,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
         }
         return false
     }
-    , eventNS = '_events' // $.data(eventNS) event namespace
+    , eventNS = 'events' // $.data(eventNS) event namespace
 
 // core
 $.fn = $.prototype = {
@@ -342,6 +342,9 @@ $.fn.extend({
     data: function(key, val) {
         return $.access(this, $.data, key, val)
     },
+    _data: function(key, val) {
+        return $.access(this, $.data, key, val)
+    },
     removeData: function(key) {
         return $.access(this, $.removeData, key, undefined, true)
     }
@@ -472,117 +475,143 @@ $.extend({
             }
         }
     },
+    _data: function(elem, key, val) {
+        if (undefined !== val) {
+            // set val
+            data_priv.set(elem, key, val)
+        } else {
+            if (key && 'object' == typeof key) {
+                // set multi
+                for (var k in key) {
+                    $._data(elem, k, key[k])
+                }
+            } else {
+                // get
+                return data_priv.get(elem, key)
+            }
+        }
+    },
     removeData: function(elem, key) {
         data_user.remove(elem, key)
     }
 })
 
-// Callbacks
-$.Callbacks = function(opt) {
-    if (!(this instanceof $.Callbacks)) {
-        return new $.Callbacks(opt)
-    }
-    opt = opt || {}
-    this.cache = []
-    this.unique = opt.unique
-}
-
-var callback = $.Callbacks.prototype
-
-callback.add = function(fn, opt) {
-    opt = opt || {}
-    opt.handler = fn
-    if (this.unique) {
-        for (var i = 0, x; x = this.cache[i++];) {
-            if (fn == x.handler) return this
-        }
-    }
-    this.cache.push(opt)
-    return this
-}
-
-callback.remove = function(fn) {
-    if (fn) {
-        for (var i = 0, x; x = this.cache[i]; i++) {
-            if ('string' == typeof fn && '.' === fn[0]) {
-                if (fn.substr(1) == x.namespace) {
-                    this.cache.splice(i, 1)
-                }
-            }
-            if (x.handler == fn) {
-                this.cache.splice(i, 1)
-            }
-        }
-    } else {
-        this.cache.length = 0
-    }
-    return this
-}
-
-callback.fire = function() {
-    return this.fireWith(this, arguments)
-}
-
-callback.fireWith = function(ctx, args) {
-    $.each(this.cache.slice(), function() {
-        return this.handler.apply(ctx, args)
-    })
-}
 
 // events
-function miniHandler(e) {
-    var events = $.data(this, eventNS) || {}
-    if (events[e.type]) {
-        events[e.type].fireWith(this, [e])
+$.Event = function(src, props) {
+    if (!(this instanceof $.Event)) {
+        return new $.Event(src, props)
     }
+    src = src || {}
+    if ('string' == typeof src) {
+        src = {
+            type: src
+        }
+    }
+    this.originalEvent = src
+    this.type = src.type
+    if (props) {
+        $.extend(this, props)
+    }
+}
+
+function miniHandler(ev) {
+    ev = $.Event(ev)
+    $.trigger(this, ev)
 }
 
 $.extend({
-    on: function(elem, ev, handler) {
-        var events = $.data(elem, eventNS)
-        var arr = ev.split('.')
-        ev = arr[0]
+    on: function(elem, type, handler, data, selector) {
+        var events = $._data(elem, eventNS)
+        var arr = type.split('.')
+        type = arr[0]
+        var namespace = arr[1]
         if (!events) {
+            // set data priv
             events = {}
-            $.data(elem, eventNS, events)
+            $._data(elem, eventNS, events)
         }
-        events[ev] = events[ev] || new $.Callbacks()
-        elem.addEventListener(ev, miniHandler, false)
-        events[ev].add(function(ev) {
-            var ret = handler.call(this, ev)
-            if (false === ret) {
-                ev.preventDefault()
-                ev.stopPropagation()
-            }
-            // TODO stopImmediatePropagation = return false
-        }, {
-            namespace: arr[1]
-        })
-    },
-    // off click, .namespace, click handler, __
-    off: function(elem, ev, handler) {
-        // $.off(elem, 'click', [handler])
-        var events = $.data(elem, eventNS)
-        if (!events) return
-        if ('.' == ev[0]) {
-            // namespace
-            for (var key in events) {
-                events[key].remove(ev)
-            }
-        } else if (events[ev]) {
-            events[ev].remove(handler)
-            if (!handler) {
-                // the event is empty, clear handler
-                elem.removeEventListener(ev, miniHandler, false)
+        if (!events[type]) {
+            events[type] = []
+            if (elem.addEventListener) {
+                elem.addEventListener(type, miniHandler, false)
+            } else if (elem.attachEvent) {
+                elem.attachEvent('on' + type, miniHandler)
             }
         }
+        var typeEvents = events[type]
+        var ev = {
+            handler: handler,
+            namespace: namespace,
+            selector: selector,
+            type: type
+        }
+        typeEvents.push(ev)
     },
     trigger: function(elem, ev) {
+        var events = $._data(elem, eventNS)
+        if ('string' == typeof ev) {
+            // self trigger, ev = type
+            ev = $.Event(ev, {
+                target: elem
+            })
+        }
+        var typeEvents = events[ev.type]
+        if (typeEvents) {
+            typeEvents = typeEvents.slice() // avoid self remove
+            var len = typeEvents.length
+            for (var i = 0; i < len; i++) {
+                var obj = typeEvents[i]
+                var ret = obj.handler.call(elem, ev)
+                if (false === ret) {
+                    ev.preventDefault()
+                    ev.stopPropagation()
+                }
+            }
+        }
+    },
+    off: function(elem, ev, handler) {
+        var events = $._data(elem, eventNS)
+        if (!events) return
+
+        ev = ev || ''
+        if (!ev || '.' == ev.charAt(0)) {
+            // namespace
+            for (var key in events) {
+                $.off(elem, key + ev, handler)
+            }
+            return
+        }
+
+        var arr = ev.split('.')
+        var type = arr[0] // always have
+        var namespace = arr[1]
+        var typeEvents = events[type]
+        if (typeEvents) {
+            for (var i = typeEvents.length - 1; i >= 0; i--) {
+                var x = typeEvents[i]
+                var shouldRemove = true
+                if (namespace && namespace != x.namespace) {
+                    shouldRemove = false
+                }
+                if (handler && handler != x.handler) {
+                    shouldRemove = false
+                }
+                if (shouldRemove) {
+                    typeEvents.splice(i, 1)
+                }
+            }
+        }
     }
 })
 
 $.fn.extend({
     eventHandler: function(events, handler, fn) {
+        if (!events) {
+            return this.each(function() {
+                fn(this)
+            })
+        }
         events = events.split(' ')
         return this.each(function() {
             for (var i = 0; i < events.length; i++) {
@@ -595,6 +624,9 @@ $.fn.extend({
     },
     off: function(events, handler) {
         return this.eventHandler(events, handler, $.off)
+    },
+    trigger: function(events, handler) {
+        return this.eventHandler(events, handler, $.trigger)
     }
 })
 
