@@ -359,7 +359,6 @@ $.fn.extend({
 // manipulation
 $.fn.extend({
     domManip: function(args, fn) {
-        // TODO 把 $().before('<h1>xx</h1>') 变为正常的
         return this.each(function() {
             var node = $.buildFragment(args)
             // always build to one node(fragment)
@@ -712,12 +711,6 @@ function request(url, opt, cb) {
     var xhr = ajaxSetting.xhr()
     if (!xhr) return
     var type = opt.type || 'GET'
-    var handler = function() {
-        if (handler &&  4 === xhr.readyState) {
-            handler = undefined
-            cb(null, xhr, xhr.responseText)
-        }
-    }
 
     xhr.open(type, url, !cb.async)
 
@@ -735,6 +728,13 @@ function request(url, opt, cb) {
 
     xhr.send(opt.data || null)
 
+    var handler = function() {
+        if (handler &&  4 === xhr.readyState) {
+            handler = undefined
+            cb(null, xhr, xhr.responseText)
+        }
+    }
+
     if (false === opt.async) {
         handler()
     } else if (4 === xhr.readyState) {
@@ -747,21 +747,41 @@ function request(url, opt, cb) {
         setTimeout(function() {
             xhr.onreadystatechange = $.noop
             xhr.abort()
-            cb('timeout', xhr)
+            // custom xhr, or throw error in IE8-
+            cb('timeout', {
+                status: 0,
+                readyState: 0,
+                statusText: 'timeout'
+            })
         }, opt.timeout)
     }
 }
 
 $.ajax = function(url, opt) {
     // TODO fuck the status, statusText, even for jsonp
+    var ret = {}
     request(url, opt, function(err, xhr, body) {
-        if (err) {
-            opt.error && opt.error(err, xhr.statusText, xhr)
-        } else {
-            opt.success && opt.success(body, xhr.statusText, xhr)
+        xhr = xhr || {}
+        var jqxhr = {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            readyState: xhr.readyState
         }
-        opt.complete && opt.complete(xhr, xhr.statusText)
+        $.extend(ret, jqxhr)
+        // success, timeout, error
+        var resText = 'success'
+        if (err || 200 != ret.status) {
+            resText = 'error'
+            if ('timeout' == err) {
+                resText = 'timeout'
+            }
+            opt.error && opt.error(ret, resText, xhr.statusText)
+        } else {
+            opt.success && opt.success(xhr.responseText, resText, ret)
+        }
+        opt.complete && opt.complete(ret, resText)
     })
+    return ret
 }
 
 $.each(['get', 'post'], function(i, method) {
