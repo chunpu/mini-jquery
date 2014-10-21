@@ -103,7 +103,12 @@ $.extend = $.fn.extend = function() {
 $.extend({
     expando: expando(),
     toArray: function(arr, ret) {
-        return [].push.apply(ret || [], arr)
+        ret = ret || []
+        var len = arr.length
+        for (var i = 0; i < len; i++) {
+            ret.push(arr[i])
+        }
+        return ret
     },
     isLetter: isLetter,
     noop: function() {},
@@ -356,7 +361,9 @@ $.fn.extend({
     domManip: function(args, fn) {
         // TODO 把 $().before('<h1>xx</h1>') 变为正常的
         return this.each(function() {
-            fn.apply(this, args)
+            var node = $.buildFragment(args)
+            // always build to one node(fragment)
+            fn.call(this, node)
         })
     },
     remove: function() {
@@ -378,6 +385,11 @@ $.fn.extend({
             if (elem.parentNode) {
                 elem.parentNode.insertBefore(elem, this.nextSibling)
             }
+        })
+    },
+    append: function() {
+        return this.domManip(arguments, function(elem) {
+            this.appendChild(elem)
         })
     }
 })
@@ -436,10 +448,14 @@ $.extend({
     },
     text: function(elem, key, val) {
         // TODO innerText
-        if (undefined === val) {
-            return elem.textContent
+        var key = 'innerText'
+        if ('textContent' in elem) {
+            key = 'textContent'
         }
-        elem.textContent = '' + val
+        if (undefined === val) {
+            return elem[key]
+        }
+        elem[key] = '' + val
     },
     html: function(elem, key, val) {
         if (undefined === val) {
@@ -494,6 +510,33 @@ $.extend({
     },
     removeData: function(elem, key) {
         data_user.remove(elem, key)
+    },
+    buildFragment: function(elems, context) {
+        context = context || document
+        var fragment = context.createDocumentFragment()
+        for (var i = 0, elem; elem = elems[i++];) {
+            var nodes = []
+            if ('string' == typeof elem) {
+                if (elem.indexOf('<') == -1) {
+                    nodes.push(context.createTextNode(elem))
+                } else {
+                    var div = document.createElement('div')
+                    div.innerHTML = elem
+                    $.toArray(div.childNodes, nodes)
+                }
+            } else if ('object' == typeof elem) {
+                if (elem.nodeType) {
+                    nodes.push(elem)
+                } else {
+                    $.toArray(elem, nodes)
+                }
+
+            }
+        }
+        for (var i = 0, node; node = nodes[i++];) {
+            fragment.appendChild(node)
+        }
+        return fragment
     }
 })
 
@@ -690,7 +733,6 @@ function request(url, opt, cb) {
         }
     }
 
-//    xhr.withCredentials = true
     xhr.send(opt.data || null)
 
     if (false === opt.async) {
