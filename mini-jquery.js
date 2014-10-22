@@ -15,7 +15,7 @@ var $ = function(selector, context) {
 var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     , rvalidtokens = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g
     , slice = [].slice
-    , expando = function() {
+    , getExpando = function() {
         return Math.random() + 1
     }
     , classes = 'boolean number string function array date regexp object error'.split(' ')
@@ -40,6 +40,7 @@ $.fn = $.prototype = {
     version: '0.0.1',
     constructor: $,
     length: 0,
+    expando: getExpando(),
     jquery: true,
     toArray: function() {
         return $.toArray(this)
@@ -101,7 +102,7 @@ $.extend = $.fn.extend = function() {
 }
 
 $.extend({
-    expando: expando(),
+    expando: getExpando(),
     toArray: function(arr, ret) {
         ret = ret || []
         var len = arr.length
@@ -394,7 +395,7 @@ $.fn.extend({
 })
 
 function Data() {
-    this.expando = expando()
+    this.expando = getExpando()
     this.cache = []
 }
 
@@ -690,9 +691,111 @@ $.ajaxSetting = ajaxSetting
 
 $.request = request
 
+$.getScript = getScript
+
 var support = {}
 
 $.support = support
+
+function getScript(url, opt, cb) {
+    var head = $('head')[0]
+    var script = document.createElement('script')
+
+    function finish(err) {
+        if (script) {
+            if (cb) {
+                // fake xhr
+                var xhr = {
+                    status: 200
+                }
+                if (err) {
+                    xhr = {
+                        status: 0
+                    }
+                }
+                cb(err, xhr)
+            }
+            script.onload = script.onerror = script.onreadystatechange = null
+            head.removeChild(script)
+            script = null
+        }
+    }
+
+    function send() {
+        script.async = true
+        script.src = url
+        script.onload = script.onerror = script.onreadystatechange = function(ev) {
+            var state = script.readyState
+            if (ev && 'error' == ev.type) { // old browser has no onerror
+                finish('error')
+            } else if (!state || /loaded|complete/.test(state)) { // new browser has no state
+                finish(null)
+            }
+        }
+        head.appendChild(script)
+    }
+
+    return {
+        abort: function() {
+            cb = null
+            finish()
+        },
+        send: send
+    }
+}
+
+function getXhr(url, opt, cb) {
+
+    var xhr = ajaxSetting.xhr()
+
+    function send() {
+        if (!xhr) return
+        var type = opt.type || 'GET'
+
+        xhr.open(type, url, !cb.async)
+
+        if (cors in xhr) {
+            support.cors = true
+            xhr[cors] = true // should after open
+        }
+
+        var headers = opt.headers
+        if (headers) {
+            for (var key in headers) {
+                xhr.setRequestHeader(key, headers[key])
+            }
+        }
+
+        xhr.send(opt.data || null)
+
+        var handler = function() {
+            if (handler &&  4 === xhr.readyState) {
+                handler = undefined
+                cb && cb(null, xhr, xhr.responseText)
+            }
+        }
+
+        if (false === opt.async) {
+            handler()
+        } else if (4 === xhr.readyState) {
+            setTimeout(handler)
+        } else {
+            xhr.onreadystatechange = handler
+        }
+    }
+
+    function abort() {
+        if (!xhr) return
+        cb = null
+        xhr.abort()
+    }
+
+    return {
+        send: send,
+        abort: abort
+    }
+
+}
 
 function request(url, opt, cb) {
     if (url && 'object' == typeof url) {
@@ -705,54 +808,52 @@ function request(url, opt, cb) {
     }
     cb = cb || $.noop
 
-    // TODO seperate by dataType, return {send, abort} 
-    //if dataType == jsonp, script
-    var dataType = opt.dataType
-    var xhr = ajaxSetting.xhr()
-    if (!xhr) return
-    var type = opt.type || 'GET'
+    var dataType = opt.dataType || 'text' // html, script, jsonp, text
 
-    xhr.open(type, url, !cb.async)
-
-    if (cors in xhr) {
-        support.cors = true
-        xhr[cors] = true // should after open
-    }
-
-    var headers = opt.headers
-    if (headers) {
-        for (var key in headers) {
-            xhr.setRequestHeader(key, headers[key])
+    var req
+    var isJsonp = false
+    if ('jsonp' == dataType) {
+        isJsonp = true
+        var jsonp = opt.jsonp || ajaxSetting.jsonp
+        var jsonpCallback = opt.jsonpCallback || 'miniJQ' + $.expando + '_' + $.now()
+        var keyTmpl = jsonp + '=?'
+        if (url.indexOf(keyTmpl) == -1) {
+            if (url.indexOf('?') == -1) {
+                url += '?'
+            }
+            url += '&' + jsonp + '=' + jsonpCallback
+        } else {
+            url.replace(keyTmpl, jsonp + '=' + jsonpCallback)
+        }
+        if (!opt.cache) {
+            url += '&_=' + $.now()
+        }
+        dataType = 'script'
+        window[jsonpCallback] = function(ret) { // only get first one
+            cb(null, {
+                status: 200
+            }, ret)
+            window[jsonpCallback] = null
         }
     }
-
-    xhr.send(opt.data || null)
-
-    var handler = function() {
-        if (handler &&  4 === xhr.readyState) {
-            handler = undefined
-            cb(null, xhr, xhr.responseText)
-        }
+    if ('script' == dataType) {
+        req = getScript(url, opt, isJsonp ? null : cb)
+    } else if (/html|text/.test(dataType)) {
+        req = getXhr(url, opt, cb)
     }
-
-    if (false === opt.async) {
-        handler()
-    } else if (4 === xhr.readyState) {
-        setTimeout(handler)
-    } else {
-        xhr.onreadystatechange = handler
-    }
+    req.send()
 
     if (opt.timeout) {
         setTimeout(function() {
-            xhr.onreadystatechange = $.noop
-            xhr.abort()
-            // custom xhr, or throw error in IE8-
-            cb('timeout', {
+            req.abort() // should never call cb, because user know he abort it
+            cb && cb('timeout', {
                 status: 0,
                 readyState: 0,
                 statusText: 'timeout'
             })
+            if (isJsonp) {
+                window[jsonpCallback] = $.noop
+            }
         }, opt.timeout)
     }
 }
@@ -777,7 +878,7 @@ $.ajax = function(url, opt) {
             }
             opt.error && opt.error(ret, resText, xhr.statusText)
         } else {
-            opt.success && opt.success(xhr.responseText, resText, ret)
+            opt.success && opt.success(body || xhr.responseText, resText, ret)
         }
         opt.complete && opt.complete(ret, resText)
     })
