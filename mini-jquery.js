@@ -1,11 +1,11 @@
 !function(f) {
     function $() {
-        return f(window, document, navigator, undefined, setTimeout)
+        return f(window, document, navigator, undefined, setTimeout, encodeURIComponent, decodeURIComponent)
     }
     if ('object' == typeof exports) module.exports = $()
     else if ('function' == typeof define && define.amd) define($)
     else window.$ = $()
-}(function(window, document, navigator, undefined, setTimeout) {
+}(function(window, document, navigator, undefined, setTimeout, encodeURIComponent, decodeURIComponent) {
 
 var $ = function(selector, context) {
     return new $.fn.init(selector, context)
@@ -696,6 +696,48 @@ $.getScript = getScript
 var support = {}
 
 $.support = support
+
+var querystring = {
+    parse: function(qs, sep, eq) {
+        if ('string' != typeof qs) return {}
+        sep = sep || '&'
+        eq = eq || '='
+        var ret = {}
+        qs = qs.split(sep)
+        for (var i = 0; i < qs.length; i++) {
+            var arr = qs[i].split(eq)
+            if (2 == arr.length) {
+                var k = arr[0]
+                var v = arr[1] || ''
+                if (k) {
+                    try {
+                        k = decodeURIComponent(k)
+                        v = decodeURIComponent(v)
+                        ret[k] = v
+                    } catch (e) {}
+                }
+            }
+        }
+        return ret
+    },
+    stringify: function(obj, sep, eq) {
+        if (obj && 'object' == typeof obj) {
+            sep = sep || '&'
+            eq = eq || '='
+            var ret = []
+            for (var k in obj) {
+                var v = obj[k]
+                if (v || '' === v) {
+                    ret.push(encodeURIComponent(k) + eq + encodeURIComponent(v))
+                }
+            }
+            return ret.join(sep)
+        }
+        return ''
+    }
+}
+
+$.querystring = querystring
 
 function getScript(url, opt, cb) {
     var head = $('head')[0]
