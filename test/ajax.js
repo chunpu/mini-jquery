@@ -106,6 +106,31 @@ describe('ajax', function() {
         })
     })
 
+    it('$.ajax dataType = jsonp', function(done) {
+        var i = 0
+        var timeout = 1000
+        $.ajax('/test/asserts/jsonp.js', {
+            dataType: 'jsonp',
+            jsonpCallback: 'jsonpcallback',
+            timeout: timeout,
+            success: function(ret, text, xhr) {
+                i++
+                assert.deepEqual(ret, {foo: 'bar'})
+            },
+            error: function() {
+                assert(false, 'should success')
+            },
+            complete: function(xhr, text) {
+                assert(i == 1)
+                i++
+            }
+        })
+        setTimeout(function() {
+            assert(i == 2, 'no more handler is called')
+            done()
+        }, timeout + 100)
+    })
+
     it('$.ajax dataType = jsonp timeout', function(done) {
         var i = 0
         $.ajax('/test/asserts/jsonp.js', {

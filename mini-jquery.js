@@ -852,6 +852,7 @@ function bindQuery2url(url, query) {
 }
 
 function request(url, opt, cb) {
+    // cb can only be called once
     if (url && 'object' == typeof url) {
         return $.ajax(url.url, url, cb)
     }
@@ -860,7 +861,14 @@ function request(url, opt, cb) {
         cb = opt
         opt = {}
     }
-    cb = cb || $.noop
+
+    var hasCalled = false
+    var callback = function(err, res, body) {
+        if (hasCalled) return
+        cb = cb || $.noop
+        hasCalled = true
+        cb(err, res, body)
+    }
 
     var dataType = opt.dataType || 'text' // html, script, jsonp, text
 
@@ -884,23 +892,23 @@ function request(url, opt, cb) {
         
         dataType = 'script'
         window[jsonpCallback] = function(ret) { // only get first one
-            cb(null, {
+            callback(null, {
                 status: 200
             }, ret)
             window[jsonpCallback] = null
         }
     }
     if ('script' == dataType) {
-        req = getScript(url, opt, isJsonp ? null : cb)
+        req = getScript(url, opt, isJsonp ? null : callback)
     } else if (/html|text/.test(dataType)) {
-        req = getXhr(url, opt, cb)
+        req = getXhr(url, opt, callback)
     }
     req.send()
 
     if (opt.timeout) {
         setTimeout(function() {
-            req.abort() // should never call cb, because user know he abort it
-            cb && cb('timeout', {
+            req.abort() // should never call callback, because user know he abort it
+            callback('timeout', {
                 status: 0,
                 readyState: 0,
                 statusText: 'timeout'
