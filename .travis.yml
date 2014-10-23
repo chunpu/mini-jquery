@@ -11,4 +11,4 @@ install:
   - npm install
 script:
   - npm run build
-  - duo-test saucelabs -b ie:6,chrome,firefox,iphone,android
+  - duo-test saucelabs -b ie:9,chrome,firefox,iphone,android
