@@ -727,7 +727,7 @@ var querystring = {
             var ret = []
             for (var k in obj) {
                 var v = obj[k]
-                if (v || '' === v) {
+                if (v || '' === v || 0 === v) { // be careful with 0, ''
                     ret.push(encodeURIComponent(k) + eq + encodeURIComponent(v))
                 }
             }
@@ -845,7 +845,8 @@ function bindQuery2url(url, query) {
     if (-1 == url.indexOf('?')) {
         url += '?'
     }
-    if ('&' != url.charAt(url.length - 1)) {
+    var last = url.charAt(url.length - 1)
+    if ('&' != last && '?' != last) {
         url += '&'
     }
     return url + $.querystring.stringify(query)
