@@ -16,7 +16,7 @@ var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     , rvalidtokens = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g
     , slice = [].slice
     , getExpando = function() {
-        return Math.random() + 1
+        return ('miniJQ' + Math.random()).replace(/\W/g, '')
     }
     , classes = 'boolean number string function array date regexp object error'.split(' ')
     , isLetter = function(str) {
@@ -794,6 +794,8 @@ function getXhr(url, opt, cb) {
         if (!xhr) return
         var type = opt.type || 'GET'
 
+        url = bindQuery2url(url, opt.data)
+
         xhr.open(type, url, !cb.async)
 
         if (cors in xhr) {
@@ -839,6 +841,16 @@ function getXhr(url, opt, cb) {
 
 }
 
+function bindQuery2url(url, query) {
+    if (-1 == url.indexOf('?')) {
+        url += '?'
+    }
+    if ('&' != url.charAt(url.length - 1)) {
+        url += '&'
+    }
+    return url + $.querystring.stringify(query)
+}
+
 function request(url, opt, cb) {
     if (url && 'object' == typeof url) {
         return $.ajax(url.url, url, cb)
@@ -857,19 +869,19 @@ function request(url, opt, cb) {
     if ('jsonp' == dataType) {
         isJsonp = true
         var jsonp = opt.jsonp || ajaxSetting.jsonp
-        var jsonpCallback = opt.jsonpCallback || 'miniJQ' + $.expando + '_' + $.now()
+        var jsonpCallback = opt.jsonpCallback || $.expando + '_' + $.now()
         var keyTmpl = jsonp + '=?'
-        if (url.indexOf(keyTmpl) == -1) {
-            if (url.indexOf('?') == -1) {
-                url += '?'
-            }
-            url += '&' + jsonp + '=' + jsonpCallback
-        } else {
+        var query = $.extend({}, opt.data)
+        if (url.indexOf(keyTmpl) != -1) {
             url.replace(keyTmpl, jsonp + '=' + jsonpCallback)
+        } else {
+            query[jsonp] = jsonpCallback
         }
         if (!opt.cache) {
-            url += '&_=' + $.now()
+            query._ = $.now()
         }
+        url = bindQuery2url(url, query)
+        
         dataType = 'script'
         window[jsonpCallback] = function(ret) { // only get first one
             cb(null, {
