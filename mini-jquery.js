@@ -890,7 +890,7 @@ function request(url, opt, cb) {
             query._ = $.now()
         }
         url = bindQuery2url(url, query)
-        
+
         dataType = 'script'
         window[jsonpCallback] = function(ret) { // only get first one
             callback(null, {
