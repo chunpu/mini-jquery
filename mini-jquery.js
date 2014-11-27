@@ -972,7 +972,7 @@ $.each(['get', 'post'], function(i, method) {
 var display = 'display'
 // init iframe for dirty thing
 var iframe = $("<iframe frameborder='0' width='0' height='0' />")
-$('body').append(iframe)
+$(document.documentElement).append(iframe)
 var iframeDoc = (iframe[0].contentWindow || iframe[0].contentDocument).document
 iframeDoc.write()
 iframeDoc.close()
