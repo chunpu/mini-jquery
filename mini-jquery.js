@@ -973,11 +973,15 @@ var display = 'display'
 // init iframe for dirty thing
 var iframe = $("<iframe frameborder='0' width='0' height='0' />")
 $(document.documentElement).append(iframe)
-var iframeDoc = (iframe[0].contentWindow || iframe[0].contentDocument).document
-iframeDoc.write()
-iframeDoc.close()
+var iframeDoc
+try {
+    iframeDoc = (iframe[0].contentWindow || iframe[0].contentDocument).document
+    iframeDoc.write()
+    iframeDoc.close()
+} catch (e) {}
 var defaultDisplayCache = {}
 function getDefaultDisplay(tag, doc) {
+    if (!doc) return
     if (!defaultDisplayCache[tag]) {
         var el = doc.createElement(tag)
         $(doc.body).append(el)
