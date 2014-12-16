@@ -971,6 +971,7 @@ $.each(['get', 'post'], function(i, method) {
 // show hide toggle
 var display = 'display'
 // init iframe for dirty thing
+/*
 var iframe = $("<iframe frameborder='0' width='0' height='0' />")
 $(document.documentElement).append(iframe)
 var iframeDoc
@@ -988,7 +989,7 @@ function getDefaultDisplay(tag, doc) {
         defaultDisplayCache[tag] = $.css(el, display) || 'block'
     }
     return defaultDisplayCache[tag]
-}
+}*/
 
 $.each('show hide toggle'.split(' '), function(i, key) {
     $.fn[key] = function() {
@@ -1003,7 +1004,7 @@ $.each('show hide toggle'.split(' '), function(i, key) {
                 }
             }
             if ('show' == act && isHiden) {
-                var css = $._data(el, display) || getDefaultDisplay(el.tagName, iframeDoc) || 'block'
+                var css = $._data(el, display) || 'block'
                 $.css(el, display, css)
             } else if ('hide' == act && !isHiden) {
                 $._data(el, display, old)

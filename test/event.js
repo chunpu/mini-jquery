@@ -1,4 +1,7 @@
+require('./global')
+
 describe('event', function() {
+    initWithoutClear('<div id="event"></div>')
     var $el = $('#event')
 
     it('simple on and trigger', function() {

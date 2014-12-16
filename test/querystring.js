@@ -1,3 +1,4 @@
+require('./global')
 describe('querystring', function() {
     it ('stringify', function() {
         var qs = $.querystring.stringify({

@@ -1,3 +1,4 @@
+require('./global')
 describe('$.type', function() {
     // different of jquery, $.type return class type
     it('array', function() {

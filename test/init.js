@@ -8,12 +8,14 @@ describe('init', function() {
     })
 
     it('$(#id)', function() {
+        init('<ul id="ul"><li></li><li></li></ul>')
         var $ul = $('#ul')
         assert.equal(1, $ul.length, '$(#id) always get one')
         assert.equal('ul', $ul[0].id, 'id is ul')
     })
 
     it('$(tag)', function() {
+        init('<ul id="ul"><li></li><li></li></ul>')
         var ul = $('#ul')[0]
         assert(ul.nodeType, 'get ul first')
         var $li = $('li', ul)
@@ -21,6 +23,7 @@ describe('init', function() {
     })
 
     it('$([dom1, dom2])', function() {
+        init('<ul id="ul"><li></li><li></li></ul>')
         var $ul = document.getElementsByTagName('ul')
         var len = $ul.length
         assert(!$ul.jquery, 'not jquery nodes')
@@ -30,6 +33,7 @@ describe('init', function() {
     })
 
     it('$($nodes)', function() {
+        init('<ul id="ul"><li></li><li></li></ul>')
         var $nodes1 = $('ul')
         var $nodes2 = $($nodes1)
         assert.equal($nodes2.length, $nodes1.length, '$($nodes) same length')

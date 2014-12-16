@@ -1,3 +1,4 @@
+require('./global')
 function noop() {}
 
 describe('core', function() {
