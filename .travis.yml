@@ -3,5 +3,5 @@ branches:
   only:
     - gh-pages
 install:
-  - npm install -g phantomjs
+  - npm install -g phantomjs testling
   - npm install
