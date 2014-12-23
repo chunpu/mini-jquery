@@ -477,8 +477,9 @@ $.extend({
             if (window.getComputedStyle) {
                 return getComputedStyle(elem, null)[key]
             }
+        } else {
+            style[key] = val
         }
-        style[key] = val
     },
     data: function(elem, key, val) {
         if (undefined !== val) {
@@ -558,6 +559,7 @@ $.Event = function(src, props) {
     }
     this.originalEvent = src
     this.type = src.type
+    this.target = src.target || src.srcElement
     if (props) {
         $.extend(this, props)
     }
@@ -565,7 +567,10 @@ $.Event = function(src, props) {
 
 function miniHandler(ev) {
     ev = $.Event(ev)
-    $.trigger(this, ev)
+    var elem = this
+    if (!elem.nodeType)
+        elem = ev.target
+    $.trigger(elem, ev)
 }
 
 $.extend({
