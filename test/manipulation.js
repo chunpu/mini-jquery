@@ -1,4 +1,3 @@
-require('./global')
 describe('manipulation', function() {
     initWithoutClear("<div id='html'><div>html</div></div><div id='text'>text</div>")
     it('text', function() {

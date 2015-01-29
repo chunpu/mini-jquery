@@ -1,5 +1,3 @@
-require('./global')
-
 describe('event', function() {
     initWithoutClear('<div id="event"></div>')
     var $el = $('#event')

@@ -1,12 +1,12 @@
 {
   "name": "mini-jquery",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "description": "A mini jQuery",
   "main": "mini-jquery.js",
   "scripts": {
     "phantomjs": "duo-test phantomjs",
-    "build": "cat test/head > _temp.js && cat test/*.js >> _temp.js && browserify _temp.js > build.js && cat show.html > test/index.html",
-    "test": "testling --browser=phantomjs"
+    "build": "browserify test/*.js > build.js && cat show.html > test/index.html",
+    "test": "browserify test/*.js | poor -R dot -b ie:6..8,chrome"
   },
   "testling": {
     "harness": "mocha-bdd",
@@ -34,6 +34,18 @@
   "homepage": "https://github.com/chunpu/mini-jquery",
   "devDependencies": {
     "browserify": "^6.0.3",
-    "mocha": "^2.0.1"
+    "mocha": "^2.0.1",
+    "poor": "^1.1.3"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "coverify": "^1.0.7",
+    "mochify": "^2.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chunpu/mini-jquery"
   }
 }

@@ -1,4 +1,3 @@
-require('./global')
 describe('data', function() {
     var el = document.body
     it('basic', function() {

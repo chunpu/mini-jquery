@@ -1,4 +1,3 @@
-require('./global')
 describe('ajax', function() {
     var empty = '/test/asserts/empty.js'
     it('$.request', function(done) {

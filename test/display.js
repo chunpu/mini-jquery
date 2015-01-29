@@ -1,4 +1,3 @@
-require('./global')
 describe('display', function() {
     var $box = $('#display')
     it('show', function() {

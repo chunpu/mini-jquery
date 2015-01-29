@@ -54,6 +54,12 @@ $.fn = $.prototype = {
     each: function(fn) {
         return $.each(this, fn)
     },
+    map: function(fn) {
+        return $.map(this, fn)
+    },
+    filter: function(fn) {
+        return $.filter(this, fn)
+    },
     pushStack: function(elems) {
         var ret = $.merge($(), elems)
         ret.prevObject = this
@@ -242,6 +248,26 @@ $.extend({
             return ''
         })) ? (Function('return ' + str))() : $.error("Invalid JSON: " + data)
     },
+    parseXML: function(data) {
+        var xml, tmp
+        if (!data || 'string' != typeof data) return null
+        try {
+            if (window.DOMParser) {
+                tmp = new DOMParser()
+                xml = tmp.parseFromString(data, 'text/xml')
+            } else {
+                xml = new ActiveXObject('Microsoft.XMLDOM')
+                xml.async = 'false'
+                xml.loadXML(data)
+            }
+        } catch (e) {
+            xml = undefined
+        }
+        if (!xml || !xml.documentElement || xml.getElementsByTagName('parsererror').length) {
+            $.error('Invalid XML: ' + data)
+        }
+        return xml
+    },
     getClassName: function(val) {
         var ret = {}.toString.call(val).split(' ')[1]
         return ret.substr(0, ret.length - 1).toLowerCase()
@@ -316,7 +342,10 @@ $.access = function(elems, fn, key, val, isChain) {
         }
     } else if (undefined === val) {
         // get value
-        var ret = fn(elems[0], key)
+        var ret
+        if (elems[0]) { // TODO text, html should be ''
+            ret = fn(elems[0], key)
+        }
         if (!isChain) {
             return ret
         }
@@ -447,15 +476,19 @@ $.extend({
         elem.setAttribute(key, '' + val)
     },
     text: function(elem, key, val) {
-        // TODO innerText
-        var key = 'innerText'
-        if ('textContent' in elem) {
-            key = 'textContent'
+        if (undefined !== val) return elem.textContent = '' + val
+        var nodeType = elem.nodeType
+        if (3 == nodeType || 4 == nodeType) {
+            return elem.nodeValue
         }
-        if (undefined === val) {
-            return elem[key]
+        if ('string' == typeof elem.textContent) {
+            return elem.textContent
         }
-        elem[key] = '' + val
+        var ret = ''
+        for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+            ret += $.text(elem)
+        }
+        return ret
     },
     html: function(elem, key, val) {
         if (undefined === val) {
