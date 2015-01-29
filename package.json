@@ -1,32 +1,17 @@
 {
   "name": "mini-jquery",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "A mini jQuery",
   "main": "mini-jquery.js",
   "scripts": {
-    "phantomjs": "duo-test phantomjs",
-    "build": "browserify test/*.js > build.js && cat show.html > test/index.html",
-    "test": "browserify test/*.js | poor -R dot -b ie:6..8,chrome"
-  },
-  "testling": {
-    "harness": "mocha-bdd",
-    "files": "test/*.js",
-    "browsers": [
-      "ie/6..latest",
-      "chrome/22..latest",
-      "firefox/16..latest",
-      "safari/latest",
-      "opera/11.0..latest",
-      "iphone/6",
-      "ipad/6",
-      "android-browser/latest"
-    ]
+    "test": "browserify test/*.js | poor -R dot -b ie:6..8,chrome",
+    "readme": "pretty-readme > readme.md"
   },
   "ropository": {
     "type": "git",
     "url": "https://github.com/chunpu/mini-jquery.git"
   },
-  "author": "",
+  "author": "chunpu",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/chunpu/mini-jquery/issues"
@@ -39,12 +24,13 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {
-    "coverify": "^1.0.7",
-    "mochify": "^2.1.1"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/chunpu/mini-jquery"
-  }
+  },
+  "keywords": [
+    "jquery",
+    "browserify",
+    "mocha"
+  ]
 }

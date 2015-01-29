@@ -17,7 +17,6 @@ describe('$.findOne', function() {
 
         var ul = $.findOne('#ul')[0]
         var $a = $.findOne('a', ul)
-        console.debug($a, ul)
         assert($a.length == 2, 'ul has 2 a')
         for (var i = 0, a; a = $a[i++];) {
             assert.equal(a.className, 'inul', 'a should inside ul')

@@ -1,3 +1,0 @@
-var $ = require('./mini-jquery')
-var assert = require('assert')
-window.$ = $ // for test
